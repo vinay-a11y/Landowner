@@ -1,0 +1,152 @@
+{
+  "identity": {
+    "name": "E1: The Anti-AI Designer",
+    "mission": "Create a 'Botanical Ledger' aesthetic—fusing Swiss precision with organic warmth. Break the sterile ERP mold while maintaining absolute data clarity.",
+    "principles": [
+      "Fusion: Swiss Grid + Organic Textures",
+      "Emotion: Trust & Growth (Forest Green & Clay)",
+      "Content: Data is the hero; Chrome is the servant",
+      "Zoom: Focus on the numbers",
+      "Negative Space: Luxurious padding even in data-dense views"
+    ]
+  },
+  "typography": {
+    "fonts": {
+      "headings": {
+        "family": "Manrope, sans-serif",
+        "weights": ["600", "700", "800"],
+        "usage": "Page titles, Section headers, Modal titles",
+        "import": "@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');"
+      },
+      "body": {
+        "family": "IBM Plex Sans, sans-serif",
+        "weights": ["400", "500", "600"],
+        "usage": "General text, Labels, Form inputs",
+        "import": "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');"
+      },
+      "mono": {
+        "family": "JetBrains Mono, monospace",
+        "weights": ["400", "500"],
+        "usage": "Financial data, IDs, Dates, Calculated fields",
+        "import": "@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');"
+      }
+    },
+    "rules": {
+      "headings": "tracking-tight text-primary",
+      "overline": "uppercase tracking-[0.2em] text-xs font-bold text-muted-foreground",
+      "data": "font-mono tracking-tight tabular-nums"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "name": "Forest Deep",
+        "hex": "#064e3b",
+        "tailwind": "bg-emerald-900",
+        "usage": "Primary Actions, Active States, Brand Identity"
+      },
+      "secondary": {
+        "name": "Slate Structure",
+        "hex": "#475569",
+        "tailwind": "bg-slate-600",
+        "usage": "Secondary Actions, Borders, Subtitles"
+      },
+      "accent": {
+        "name": "Clay Earth",
+        "hex": "#c2410c",
+        "tailwind": "bg-orange-700",
+        "usage": "Highlights, Callouts, 'New' Badges"
+      },
+      "background": {
+        "name": "Paper White",
+        "hex": "#f8fafc",
+        "tailwind": "bg-slate-50",
+        "usage": "App Background (Main)"
+      },
+      "surface": {
+        "name": "Pure White",
+        "hex": "#ffffff",
+        "tailwind": "bg-white",
+        "usage": "Cards, Modals, Dropdowns"
+      },
+      "semantic": {
+        "success": "#059669",
+        "warning": "#d97706",
+        "error": "#dc2626",
+        "info": "#2563eb"
+      }
+    },
+    "theme_mode": "light"
+  },
+  "layout": {
+    "grid_system": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "form": "grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6"
+    },
+    "spacing": {
+      "container_padding": "p-6 md:p-8 lg:p-12",
+      "section_gap": "gap-8",
+      "internal_padding": "p-6"
+    },
+    "containers": {
+      "max_width": "max-w-7xl mx-auto",
+      "card_radius": "rounded-lg",
+      "button_radius": "rounded-md"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200",
+      "header": "border-b border-slate-100 p-6",
+      "content": "p-6"
+    },
+    "buttons": {
+      "primary": "bg-emerald-900 text-white hover:bg-emerald-800 shadow-sm font-medium px-6 py-2.5",
+      "secondary": "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 font-medium px-6 py-2.5",
+      "ghost": "text-slate-600 hover:bg-slate-100 hover:text-slate-900 px-4 py-2"
+    },
+    "inputs": {
+      "style": "bg-white border-slate-200 focus:border-emerald-600 focus:ring-emerald-600/20 h-11",
+      "label": "text-sm font-medium text-slate-700 mb-1.5 block"
+    },
+    "tables": {
+      "wrapper": "border rounded-lg overflow-hidden bg-white shadow-sm",
+      "header": "bg-slate-50 text-slate-600 font-semibold text-xs uppercase tracking-wider h-12",
+      "row": "hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-0",
+      "cell": "p-4 text-sm text-slate-700"
+    },
+    "modals": {
+      "overlay": "bg-slate-900/20 backdrop-blur-sm",
+      "content": "bg-white sm:max-w-3xl border-none shadow-2xl"
+    }
+  },
+  "visual_enhancers": {
+    "texture": "bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-[0.03] pointer-events-none fixed inset-0 z-0",
+    "shadows": {
+      "card": "shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+      "float": "shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
+    },
+    "glass": "bg-white/80 backdrop-blur-md border-b border-white/20"
+  },
+  "assets": {
+    "images": {
+      "login_bg": "https://images.unsplash.com/photo-1549791084-5f78368b208b?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "dashboard_header": "https://images.unsplash.com/photo-1763307058576-1b98af4e83c4?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "empty_state": "https://images.unsplash.com/photo-1550651542-8cb6fc81fc04?crop=entropy&cs=srgb&fm=jpg&q=85"
+    },
+    "icons": "lucide-react"
+  },
+  "universal_guidelines": [
+    "DO NOT use gradients for backgrounds. Use solid colors or subtle textures.",
+    "DO NOT use 'Inter' for headings. Use 'Manrope'.",
+    "ALWAYS use 'JetBrains Mono' for currency and area calculations.",
+    "Ensure all interactive elements have 'data-testid'.",
+    "Use 'sonner' for toasts.",
+    "Use 'recharts' for charts with custom tooltips (no default styles).",
+    "Inputs must have a height of h-11 (44px) for better touch targets.",
+    "Forms must be sectioned with clear visual dividers.",
+    "Primary buttons should be 'Forest Deep' (#064e3b).",
+    "Avoid pure black (#000000). Use Slate-950 (#020617) for text."
+  ],
+  "instructions_to_main_agent": "You are building a Land Agreement Management System. Follow the 'Botanical Ledger' aesthetic. Use the provided JSON for all styling decisions. Implement the Dashboard with the 'Control Room' grid. Use the 'Spreadsheet View' for the agreement list. Ensure the 'Add Agreement' modal is sectioned and spacious. Use the provided image URLs for the login screen and dashboard header. Prioritize data accuracy and legibility over flashy animations."
+}
