@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { Button } from "@/components/ui/button"
+import { logout } from "@/lib/auth";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   BarChart,
@@ -162,6 +164,15 @@ export default function Dashboard() {
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Add Agreement
               </Button>
+             <button
+  onClick={logout}
+  className="px-4 py-2 rounded-md 
+             bg-red-600 text-white 
+             hover:bg-red-700 
+             shadow-sm font-medium transition"
+>
+  Logout
+</button>
             </div>
           </div>
         </div>

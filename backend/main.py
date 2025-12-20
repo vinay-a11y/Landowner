@@ -9,7 +9,11 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
+from passlib.context import CryptContext
+from fastapi import Depends, Header
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -22,7 +26,29 @@ DATABASE_URL = os.environ.get(
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
+# ================= AUTH CONFIG =================
+SECRET_KEY = os.environ.get("SECRET_KEY", "8670ab6da4203471657608951cbe320834ac3fc56055899b766e6ffe72d556d6")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class ForgotPasswordRequest(BaseModel):
+    username: str
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
 # SQLAlchemy Model
 class AgreementDB(Base):
     __tablename__ = "agreements"
@@ -90,6 +116,67 @@ app.add_middleware(
 )
 
 api_router = APIRouter(prefix="/api")
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    return pwd_context.verify(password, hashed)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def get_current_user(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db)
+):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+
+    try:
+        token = authorization.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+
+        user = db.query(UserDB).filter(UserDB.username == username).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        return user
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+@api_router.post("/auth/register")
+def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    existing = db.query(UserDB).filter(UserDB.username == data.username).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    user = UserDB(
+        username=data.username,
+        password_hash=hash_password(data.password)
+    )
+
+    db.add(user)
+    db.commit()
+
+    return {"message": "User registered successfully"}
+@api_router.post("/auth/login", response_model=TokenResponse)
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.username == data.username).first()
+
+    if not user or not verify_password(data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    token = create_access_token({"sub": user.username})
+    return {"access_token": token}
+@api_router.post("/auth/forgot-password")
+def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    # Placeholder for email / OTP
+    return {"message": "If user exists, reset instructions sent"}
 
 class RelativeDelta:
     """Custom implementation to replace dateutil.relativedelta"""
@@ -222,6 +309,13 @@ def calculate_agreement_expenses(agreement_data: dict) -> dict:
     }
 
 # Pydantic Models
+class UserDB(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 class AgreementCreate(BaseModel):
     survey_no: str
     firm_name: Optional[str] = ""

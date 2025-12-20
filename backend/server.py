@@ -9,6 +9,10 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
+from jose import jwt, JWTError
+from passlib.context import CryptContext
+from fastapi import Depends, Header
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -17,6 +21,12 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# ================= AUTH CONFIG =================
+SECRET_KEY = os.environ.get("SECRET_KEY", "SUPER_SECRET_KEY_CHANGE_ME")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -128,6 +138,39 @@ def calculate_real_value(free_area_bu: float, guntas: float) -> float:
         return 0
     return (free_area_bu / guntas) * 40
 
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    return pwd_context.verify(password, hashed)
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    to_encode["iat"] = datetime.utcnow()
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+async def get_current_user(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+
+    try:
+        token = authorization.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+
+        if not username:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        user = await db.users.find_one({"username": username})
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        return user
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
 def calculate_agreement_expenses(agreement_data: dict) -> dict:
     """Calculate all agreement expenses"""
     agmt1 = (
@@ -159,6 +202,20 @@ def calculate_agreement_expenses(agreement_data: dict) -> dict:
         'agreement_3_expense': agmt3,
         'total_agreement_expense': total
     }
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class ForgotPasswordRequest(BaseModel):
+    username: str
 
 # Models
 class AgreementCreate(BaseModel):
@@ -242,10 +299,32 @@ class DashboardSummary(BaseModel):
     total_agreement_expenses: float
     net_project_cost: float
 
+
+
 # Routes
 @api_router.get("/")
 async def root():
     return {"message": "Land Agreement Management API"}
+
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def login(data: LoginRequest):
+    user = await db.users.find_one({"username": data.username})
+
+    if not user or not verify_password(data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    token = create_access_token({"sub": user["username"]})
+
+    return {"access_token": token}
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    user = await db.users.find_one({"username": data.username})
+
+    if not user:
+        return {"message": "If user exists, reset instructions sent"}
+
+    # Later: email / OTP reset logic
+    return {"message": "Password reset instructions sent"}
 
 @api_router.post("/agreements", response_model=Agreement)
 async def create_agreement(input_data: AgreementCreate):
