@@ -2,17 +2,17 @@
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
+import { Badge } from "../components/ui/badge"
 import { Globe, Crown, Code, Laptop, Shield, Lock, User, Eye, EyeOff, CheckCircle, ArrowRight } from "lucide-react"
-import { setToken } from "@//lib/auth"
+import { setToken } from "../lib/auth"
 
-const API_BASE_URL = "http://localhost:8000/api"
-
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
+const API_BASE_URL = `${BACKEND_URL}/api`
 export default function LoginPage() {
   const navigate = useNavigate()
 
@@ -20,64 +20,56 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showRegPassword, setShowRegPassword] = useState(false)
   const [activeTab, setActiveTab] = useState("login")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [loginError, setLoginError] = useState("")
+  const [registerError, setRegisterError] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
 
   // form state
-  const [username, setUsername] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [loginUsername, setLoginUsername] = useState("")
+  const [loginPassword, setLoginPassword] = useState("")
+  const [registerUsername, setRegisterUsername] = useState("")
+  const [registerPassword, setRegisterPassword] = useState("")
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    setError("")
-    setSuccess("")
-    setLoading(true)
+    setLoginError("")
+    setIsLoading(true)
 
     try {
-      console.log("[v0] Starting login request...")
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: email, // using email field for username
-          password,
+          username: loginUsername,
+          password: loginPassword,
         }),
       })
 
-      const data = await response.json()
-      console.log("[v0] Login response received:", data)
+      if (response.ok) {
+        const data = await response.json()
+        setToken(data.access_token)
 
-      if (!response.ok) {
-        throw new Error(data.detail || "Login failed")
+        console.log("Login successful")
+        navigate("/dashboard")
+      } else {
+        const errorData = await response.json()
+        setLoginError(errorData.detail || "Login failed. Please check your credentials.")
       }
-
-      console.log("[v0] Storing token:", data.access_token)
-      setToken(data.access_token)
-      console.log("[v0] Token stored, navigating to dashboard...")
-      setSuccess("Login successful! Redirecting...")
-
-      // Use window.location.href for hard navigation to ensure token is picked up
-      setTimeout(() => {
-        console.log("[v0] Navigating now...")
-        window.location.href = "/"
-      }, 500)
-    } catch (err) {
-      console.log("[v0] Login error:", err)
-      setError(err?.message || "An error occurred during login")
+    } catch (error) {
+      console.error("Login error:", error)
+      setLoginError("An error occurred. Please try again.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   const handleRegister = async (e) => {
     e.preventDefault()
-    setError("")
-    setSuccess("")
-    setLoading(true)
+    setRegisterError("")
+    setIsLoading(true)
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -86,8 +78,8 @@ export default function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username,
-          password,
+          username: registerUsername,
+          password: registerPassword,
         }),
       })
 
@@ -97,14 +89,14 @@ export default function LoginPage() {
         throw new Error(data.detail || "Registration failed")
       }
 
-      setSuccess("Registration successful! Please login.")
+      setSuccessMessage("Registration successful! Please login.")
       setActiveTab("login")
-      setUsername("")
-      setPassword("")
+      setRegisterUsername("")
+      setRegisterPassword("")
     } catch (err) {
-      setError(err?.message || "An error occurred during registration")
+      setRegisterError(err.message || "An error occurred during registration")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -257,14 +249,19 @@ export default function LoginPage() {
                   </TabsList>
 
                   {/* Success/Error Messages */}
-                  {error && (
+                  {loginError && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-                      {error}
+                      {loginError}
                     </div>
                   )}
-                  {success && (
+                  {registerError && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                      {registerError}
+                    </div>
+                  )}
+                  {successMessage && (
                     <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-                      {success}
+                      {successMessage}
                     </div>
                   )}
 
@@ -272,36 +269,36 @@ export default function LoginPage() {
                   <TabsContent value="login" className="space-y-4">
                     <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-slate-700 font-medium">
+                        <Label htmlFor="loginUsername" className="text-slate-700 font-medium">
                           Username
                         </Label>
                         <div className="relative">
                           <User className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                           <Input
-                            id="email"
+                            id="loginUsername"
                             type="text"
                             placeholder="your_username"
                             className="pl-10 h-11 border-slate-300 focus:border-purple-500 focus:ring-purple-500"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={loginUsername}
+                            onChange={(e) => setLoginUsername(e.target.value)}
                             required
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="password" className="text-slate-700 font-medium">
+                        <Label htmlFor="loginPassword" className="text-slate-700 font-medium">
                           Password
                         </Label>
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                           <Input
-                            id="password"
+                            id="loginPassword"
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
                             className="pl-10 pr-10 h-11 border-slate-300 focus:border-purple-500 focus:ring-purple-500"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
                             required
                           />
                           <button
@@ -329,11 +326,11 @@ export default function LoginPage() {
 
                       <Button
                         type="submit"
-                        disabled={loading}
+                        disabled={isLoading}
                         className="w-full h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg text-base font-semibold"
                       >
-                        {loading ? "Signing in..." : "Sign In"}
-                        {!loading && <ArrowRight className="h-5 w-5 ml-2" />}
+                        {isLoading ? "Signing in..." : "Sign In"}
+                        {!isLoading && <ArrowRight className="h-5 w-5 ml-2" />}
                       </Button>
                     </form>
 
@@ -381,36 +378,36 @@ export default function LoginPage() {
                   <TabsContent value="register" className="space-y-4">
                     <form onSubmit={handleRegister} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="reg-name" className="text-slate-700 font-medium">
+                        <Label htmlFor="registerUsername" className="text-slate-700 font-medium">
                           Username
                         </Label>
                         <div className="relative">
                           <User className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                           <Input
-                            id="reg-name"
+                            id="registerUsername"
                             type="text"
                             placeholder="your_username"
                             className="pl-10 h-11 border-slate-300 focus:border-purple-500 focus:ring-purple-500"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={registerUsername}
+                            onChange={(e) => setRegisterUsername(e.target.value)}
                             required
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="reg-password" className="text-slate-700 font-medium">
+                        <Label htmlFor="registerPassword" className="text-slate-700 font-medium">
                           Password
                         </Label>
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                           <Input
-                            id="reg-password"
+                            id="registerPassword"
                             type={showRegPassword ? "text" : "password"}
                             placeholder="••••••••"
                             className="pl-10 pr-10 h-11 border-slate-300 focus:border-purple-500 focus:ring-purple-500"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={registerPassword}
+                            onChange={(e) => setRegisterPassword(e.target.value)}
                             required
                           />
                           <button
@@ -423,28 +420,13 @@ export default function LoginPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="terms"
-                          className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
-                          required
-                        />
-                        <label htmlFor="terms" className="text-sm text-slate-600">
-                          I agree to the{" "}
-                          <a href="#" className="text-purple-600 hover:text-purple-700 font-medium">
-                            Terms and Conditions
-                          </a>
-                        </label>
-                      </div>
-
                       <Button
                         type="submit"
-                        disabled={loading}
+                        disabled={isLoading}
                         className="w-full h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg text-base font-semibold"
                       >
-                        {loading ? "Creating Account..." : "Create Account"}
-                        {!loading && <ArrowRight className="h-5 w-5 ml-2" />}
+                        {isLoading ? "Creating account..." : "Create Account"}
+                        {!isLoading && <ArrowRight className="h-5 w-5 ml-2" />}
                       </Button>
                     </form>
                   </TabsContent>

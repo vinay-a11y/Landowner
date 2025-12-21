@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { Button } from "@/components/ui/button"
-import { logout } from "@/lib/auth";
+import { logout, getToken } from "@/lib/auth"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -51,15 +51,29 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true)
+      const token = getToken()
       const [summaryRes, agreementsRes] = await Promise.all([
-        axios.get(`${API}/dashboard/summary`),
-        axios.get(`${API}/agreements`),
+        axios.get(`${API}/dashboard/summary`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        axios.get(`${API}/agreements`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
       ])
       setSummary(summaryRes.data)
       setAgreements(agreementsRes.data)
     } catch (error) {
       console.error("Error fetching data:", error)
-      toast.error("Failed to load dashboard data")
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.")
+        logout()
+      } else {
+        toast.error("Failed to load dashboard data")
+      }
     } finally {
       setLoading(false)
     }
@@ -164,15 +178,15 @@ export default function Dashboard() {
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Add Agreement
               </Button>
-             <button
-  onClick={logout}
-  className="px-4 py-2 rounded-md 
-             bg-red-600 text-white 
-             hover:bg-red-700 
-             shadow-sm font-medium transition"
->
-  Logout
-</button>
+              <button
+                onClick={logout}
+                className="px-4 py-2 rounded-md 
+                         bg-red-600 text-white 
+                         hover:bg-red-700 
+                         shadow-sm font-medium transition"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -213,7 +227,11 @@ export default function Dashboard() {
               <div className="text-3xl font-bold text-slate-900 font-mono tabular-nums">
                 {summary?.total_area_guntas?.toFixed(2) || 0}
               </div>
-              <p className="text-xs text-slate-500 mt-2">Guntas</p>
+              <p className="text-xs text-slate-500 mt-1">Guntas</p>
+              <div className="text-2xl font-bold text-slate-700 font-mono tabular-nums mt-3">
+                {summary?.total_area_sqft?.toFixed(2) || 0}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Square Feet</p>
             </CardContent>
           </Card>
 

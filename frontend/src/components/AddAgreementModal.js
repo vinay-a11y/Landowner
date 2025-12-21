@@ -1,19 +1,37 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { getToken } from "@/lib/auth";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `http://127.0.0.1:8000/api`;
+const API = `${BACKEND_URL}/api`;
 
-export default function AddAgreementModal({ isOpen, onClose, onSuccess, editingId }) {
+export default function AddAgreementModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  editingId,
+}) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+
+  const initialState = {
     survey_no: "",
     firm_name: "",
     land_owner: "",
@@ -27,32 +45,48 @@ export default function AddAgreementModal({ isOpen, onClose, onSuccess, editingI
     free_area_cp: 0,
     agreement_value: 0,
     deposit_da: 0,
+
     stamp_duty_1: 0,
     regi_dd_1: 0,
     handling_charges_1: 0,
     adjudication_1: 0,
     legal_expenses_1: 0,
+
     doc_no_2: "",
     date_2: "",
     stamp_duty_2: 0,
     regi_dd_2: 0,
     handling_charges_2: 0,
     legal_expenses_2: 0,
+
     doc_no_3: "",
     stamp_duty_3: 0,
     regi_dd_3: 0,
     handling_charges_3: 0,
-  });
+  };
 
+  const [formData, setFormData] = useState(initialState);
+
+  /* ================= FETCH AGREEMENT ================= */
   useEffect(() => {
-    if (editingId) {
+    if (editingId && isOpen) {
       fetchAgreement();
+    } else if (!editingId) {
+      setFormData(initialState);
     }
-  }, [editingId]);
+  }, [editingId, isOpen]);
 
   const fetchAgreement = async () => {
     try {
-      const response = await axios.get(`${API}/agreements/${editingId}`);
+      const token = getToken();
+      const response = await axios.get(
+        `${API}/agreements/${editingId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setFormData(response.data);
     } catch (error) {
       console.error("Error fetching agreement:", error);
@@ -60,26 +94,55 @@ export default function AddAgreementModal({ isOpen, onClose, onSuccess, editingI
     }
   };
 
+  /* ================= CHANGE ================= */
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.survey_no || !formData.area || !formData.doc_no_1 || !formData.agreement_date) {
+
+    if (
+      !formData.survey_no ||
+      !formData.area ||
+      !formData.doc_no_1 ||
+      !formData.agreement_date
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       setLoading(true);
+      const token = getToken();
+
       if (editingId) {
-        await axios.put(`${API}/agreements/${editingId}`, formData);
+        await axios.put(
+          `${API}/agreements/${editingId}`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        toast.success("Agreement updated");
       } else {
-        await axios.post(`${API}/agreements`, formData);
+        await axios.post(
+          `${API}/agreements`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        toast.success("Agreement added");
       }
+
       onSuccess();
+      onClose();
     } catch (error) {
       console.error("Error saving agreement:", error);
       toast.error("Failed to save agreement");

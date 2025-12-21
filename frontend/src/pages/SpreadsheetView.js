@@ -1,20 +1,19 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Dashboard from "@/pages/Dashboard";
 import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowUpDown, Pencil, Trash2, Plus, Search, Eye } from "lucide-react"
+import { ArrowUpDown, Pencil, Trash2, Plus, Search, Eye, ArrowLeft } from "lucide-react"
 import AddAgreementModal from "../components/AddAgreementModal"
 import ViewDetails from "../components/View-details" // Fixed import path to use correct lowercase view-details folder
 import { toast } from "sonner"
+import { getToken, logout } from "@/lib/auth"
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
 const API = `${BACKEND_URL}/api`
 
-export default function SpreadsheetView() {
+export default function SpreadsheetView({ onBack }) {
   const [agreements, setAgreements] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -33,11 +32,21 @@ export default function SpreadsheetView() {
   const fetchAgreements = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API}/agreements`)
+      const token = getToken()
+      const response = await axios.get(`${API}/agreements`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       setAgreements(response.data)
     } catch (error) {
       console.error("Error fetching agreements:", error)
-      toast.error("Failed to load agreements")
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.")
+        logout()
+      } else {
+        toast.error("Failed to load agreements")
+      }
     } finally {
       setLoading(false)
     }
@@ -46,12 +55,22 @@ export default function SpreadsheetView() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this agreement?")) {
       try {
-        await axios.delete(`${API}/agreements/${id}`)
+        const token = getToken()
+        await axios.delete(`${API}/agreements/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
         toast.success("Agreement deleted successfully")
         fetchAgreements()
       } catch (error) {
         console.error("Error deleting agreement:", error)
-        toast.error("Failed to delete agreement")
+        if (error.response?.status === 401) {
+          toast.error("Session expired. Please login again.")
+          logout()
+        } else {
+          toast.error("Failed to delete agreement")
+        }
       }
     }
   }
@@ -136,6 +155,12 @@ export default function SpreadsheetView() {
       <div className="container mx-auto py-8 px-4 max-w-[1800px]">
         {/* Header */}
         <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button onClick={onBack} variant="outline" className="border-slate-300 hover:bg-slate-50 bg-transparent">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
           <h1 className="text-4xl font-bold text-slate-800 mb-2 bg-gradient-to-r from-emerald-700 to-emerald-500 bg-clip-text text-transparent">
             Agreement Management
           </h1>
@@ -159,7 +184,7 @@ export default function SpreadsheetView() {
           >
             Agreement 1 & POA
           </Button>
-          
+
           <Button
             onClick={() => setFilterSection("poa_only")}
             variant={filterSection === "poa_only" ? "default" : "outline"}

@@ -1,13 +1,16 @@
 import axios from "axios"
 
 // Create axios instance with base URL pointing to your FastAPI backend
+// Backend URL from env
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
+
+// Create axios instance
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
 })
-
 // Add request interceptor to automatically include JWT token
 api.interceptors.request.use(
   (config) => {

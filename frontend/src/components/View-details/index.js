@@ -5,6 +5,7 @@ import axios from "axios"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { FileText, Calendar, MapPin, Coins, File } from "lucide-react"
+import { getToken } from "@/lib/auth"   // ✅ THIS WAS MISSING
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
 const API = `${BACKEND_URL}/api`
@@ -20,19 +21,35 @@ export default function ViewDetails({ isOpen, onClose, agreementId }) {
     }
   }, [isOpen, agreementId])
 
-  const fetchAgreementDetails = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await axios.get(`${API}/agreements/${agreementId}`)
-      setAgreement(response.data)
-    } catch (err) {
-      console.error("Error fetching agreement details:", err)
+const fetchAgreementDetails = async () => {
+  try {
+    setLoading(true)
+    setError(null)
+
+    const token = getToken()
+
+    const response = await axios.get(
+      `${API}/agreements/${agreementId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    setAgreement(response.data)
+  } catch (err) {
+    console.error("Error fetching agreement details:", err)
+
+    if (err.response?.status === 401) {
+      setError("Session expired. Please login again.")
+    } else {
       setError("Failed to load agreement details")
-    } finally {
-      setLoading(false)
     }
+  } finally {
+    setLoading(false)
   }
+}
 
   const formatCurrency = (value) => {
     return value ? `₹${value.toLocaleString("en-IN")}` : "₹0"
@@ -109,7 +126,6 @@ export default function ViewDetails({ isOpen, onClose, agreementId }) {
                 </div>
               </div>
             </div>
-
             {/* Agreement Timeline */}
             <div className="bg-gradient-to-br from-blue-50 to-white rounded-lg p-6 border border-blue-200">
               <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
