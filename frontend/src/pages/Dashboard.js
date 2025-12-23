@@ -88,6 +88,8 @@ export default function Dashboard() {
     fetchData()
     toast.success("Agreement added successfully!")
   }
+const guntas = summary?.total_area_guntas || 0
+const sqft = guntas * 1089
 
   const rentChartData = agreements
     .filter((a) => a.total_rent > 0)
@@ -224,14 +226,15 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="text-3xl font-bold text-slate-900 font-mono tabular-nums">
-                {summary?.total_area_guntas?.toFixed(2) || 0}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Guntas</p>
-              <div className="text-2xl font-bold text-slate-700 font-mono tabular-nums mt-3">
-                {summary?.total_area_sqft?.toFixed(2) || 0}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Square Feet</p>
+ <div className="text-3xl font-bold text-slate-900 font-mono tabular-nums">
+  {guntas.toFixed(2)}
+</div>
+<p className="text-xs text-slate-500 mt-1">Guntas</p>
+
+<div className="text-2xl font-bold text-slate-700 font-mono tabular-nums mt-3">
+  {sqft.toFixed(2)}
+</div>
+<p className="text-xs text-slate-500">Sq.ft</p>
             </CardContent>
           </Card>
 
@@ -510,6 +513,18 @@ export default function Dashboard() {
               <p className="text-sm text-slate-600 mt-1">
                 Dotted chart showing total expenses. Owners paying rent shown in pink, others in purple.
               </p>
+            
+                      <div className="flex justify-center gap-6 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded bg-pink-500" />
+                          <span className="text-slate-700">Paying Rent</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded bg-purple-500" />
+                          <span className="text-slate-700">Possession Given</span>
+                        </div>
+                      </div>
+                  
             </CardHeader>
             <CardContent className="p-6">
               <ResponsiveContainer width="100%" height={400}>
@@ -570,21 +585,7 @@ export default function Dashboard() {
                       return null
                     }}
                   />
-                  <Legend
-                    wrapperStyle={{ paddingTop: "20px" }}
-                    content={() => (
-                      <div className="flex justify-center gap-6 text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-pink-500" />
-                          <span className="text-slate-700">Paying Rent</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-purple-500" />
-                          <span className="text-slate-700">Possession Given</span>
-                        </div>
-                      </div>
-                    )}
-                  />
+                 
                   <Bar dataKey="total" radius={[8, 8, 0, 0]} fillOpacity={0.8} strokeDasharray="4 4" stroke="#64748b">
                     {expenseChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.isPayingRent ? "#ec4899" : "#8b5cf6"} />

@@ -103,8 +103,37 @@ export default function SpreadsheetView({ onBack }) {
       )
     })
 
+    // - agr1_poa: only show agreements that have Agreement 1 data
+    // - poa_only: only show agreements that have Agreement 2 data
+    // - work_only: only show agreements that have Work Contract data
+    let sectionFiltered = filtered
+    if (filterSection === "agr1_poa") {
+      sectionFiltered = filtered.filter(
+        (agreement) =>
+          agreement.doc_no_1 ||
+          agreement.stamp_duty_1 ||
+          agreement.regi_dd_1 ||
+          agreement.handling_charges_1 ||
+          agreement.adjudication_1 ||
+          agreement.legal_expenses_1,
+      )
+    } else if (filterSection === "poa_only") {
+      sectionFiltered = filtered
+    } else if (filterSection === "work_only") {
+      sectionFiltered = filtered.filter(
+        (agreement) =>
+          agreement.doc_no_3 ||
+          agreement.stamp_duty_3 ||
+          agreement.regi_dd_3 ||
+          agreement.handling_charges_3 ||
+          agreement.contract_value ||
+          agreement.contract_date ||
+          agreement.work_contract_amount,
+      )
+    }
+
     if (sortConfig.key) {
-      filtered.sort((a, b) => {
+      sectionFiltered.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {
           return sortConfig.direction === "asc" ? -1 : 1
         }
@@ -115,8 +144,8 @@ export default function SpreadsheetView({ onBack }) {
       })
     }
 
-    return filtered
-  }, [agreements, searchTerm, sortConfig])
+    return sectionFiltered
+  }, [agreements, searchTerm, sortConfig, filterSection])
 
   const handleModalClose = () => {
     setIsAddModalOpen(false)
@@ -145,7 +174,7 @@ export default function SpreadsheetView({ onBack }) {
       return columnType === "basic" || columnType === "agr2"
     }
     if (filterSection === "work_only") {
-      return columnType === "basic" || columnType === "agr3"
+      return columnType === "basic" || columnType === "agr1" || columnType === "agr3"
     }
     return true
   }
@@ -174,15 +203,7 @@ export default function SpreadsheetView({ onBack }) {
             size="sm"
             className={filterSection === "all" ? "bg-emerald-600 hover:bg-emerald-700" : ""}
           >
-            All Documents (Default)
-          </Button>
-          <Button
-            onClick={() => setFilterSection("agr1_poa")}
-            variant={filterSection === "agr1_poa" ? "default" : "outline"}
-            size="sm"
-            className={filterSection === "agr1_poa" ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-          >
-            Agreement 1 & POA
+            All Documents (Default) ({agreements.length})
           </Button>
 
           <Button
@@ -191,7 +212,7 @@ export default function SpreadsheetView({ onBack }) {
             size="sm"
             className={filterSection === "poa_only" ? "bg-emerald-600 hover:bg-emerald-700" : ""}
           >
-            POA Only
+            Land Agreement (POA)
           </Button>
           <Button
             onClick={() => setFilterSection("work_only")}
@@ -315,7 +336,7 @@ export default function SpreadsheetView({ onBack }) {
                           colSpan="6"
                           className="px-4 py-3 text-center text-sm font-bold text-emerald-800 uppercase tracking-wider bg-gradient-to-r from-emerald-100 to-emerald-50 border-l-2 border-emerald-300"
                         >
-                          Agreement 1 (POA)
+                          Land Agreement (POA)
                         </th>
                       </>
                     )}
@@ -348,9 +369,7 @@ export default function SpreadsheetView({ onBack }) {
                       Total
                     </th>
 
-                    <th className="px-4 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider sticky right-0 bg-slate-100 z-10">
-                      Actions
-                    </th>
+                    <th className="px-4 py-4 text-center sticky right-0 bg-slate-100 z-10">Actions</th>
                   </tr>
 
                   {/* Sub-headers Row */}
